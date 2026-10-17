@@ -1,2 +1,17 @@
+
+[project]
+name = "inventory-management-system"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "Flask",
+    "Flask-Login",
+    "Flask-Migrate",
+    "Flask-SQLAlchemy",
+    "Flask-WTF",
+    "python-dotenv",
+    "click",
+]
+
 [tool.vercel]
 entrypoint = "run:app"
