@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><p class="eyebrow">ANALYTICS / EXPORTS</p><h1>Reports</h1><p class="muted-copy">Download records from the live inventory database.</p></div>
+</div>
+<section class="panel report-filter">
+  <form class="row align-items-end g-3" data-report-dates>
+    <div class="col-sm-4 col-lg-3"><label class="form-label" for="from-date">From</label><input class="form-control" type="date" id="from-date" name="from"></div>
+    <div class="col-sm-4 col-lg-3"><label class="form-label" for="to-date">To / snapshot date</label><input class="form-control" type="date" id="to-date" name="to"></div>
+    <div class="col-sm-4 col-lg-3"><button type="button" class="btn btn-outline-secondary" data-set-range>Last 30 days</button></div>
+  </form>
+</section>
+<div class="report-grid mt-4">
+  <article class="panel report-card"><span class="panel-icon green"><i class="bi bi-receipt"></i></span><h2>Sales report</h2><p>Completed invoices, customer names, discounts, tax, and totals for the selected date range.</p><a class="btn btn-outline-primary" data-date-export href="{{ url_for('reports.sales_csv') }}"><i class="bi bi-download me-2"></i>Download CSV</a></article>
+  <article class="panel report-card"><span class="panel-icon coral"><i class="bi bi-truck"></i></span><h2>Purchase report</h2><p>Supplier orders, receiving status, warehouse, and order value by creation date.</p><a class="btn btn-outline-primary" data-date-export href="{{ url_for('reports.purchases_csv') }}"><i class="bi bi-download me-2"></i>Download CSV</a></article>
+  <article class="panel report-card"><span class="panel-icon blue"><i class="bi bi-arrow-left-right"></i></span><h2>Stock movements</h2><p>Receipts, issues, adjustments, and transfer history in the selected date range.</p><a class="btn btn-outline-primary" data-date-export href="{{ url_for('reports.inventory_csv') }}"><i class="bi bi-download me-2"></i>Download CSV</a></article>
+  <article class="panel report-card"><span class="panel-icon amber"><i class="bi bi-exclamation-triangle"></i></span><h2>Low stock</h2><p>Historical end-of-day balances reconstructed from the movement ledger for the selected snapshot date.</p><a class="btn btn-outline-primary" data-date-export data-date-param="as_of" href="{{ url_for('reports.low_stock_csv') }}"><i class="bi bi-download me-2"></i>Download CSV</a></article>
+</div>
+{% endblock %}

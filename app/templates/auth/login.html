@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Sign in{% endblock %}
+{% block auth_content %}
+<section class="login-panel">
+  <a class="brand login-brand" href="{{ url_for('auth.login') }}"><span class="brand-mark"><i class="bi bi-box-seam"></i></span><span>Stockroom</span></a>
+  <p class="eyebrow">INVENTORY OPERATIONS</p>
+  <h1>Good to have you back.</h1>
+  <p class="muted-copy">Sign in to manage products, stock, and orders.</p>
+  {% for category, message in get_flashed_messages(with_categories=true) %}<div class="alert alert-{{ category }}">{{ message }}</div>{% endfor %}
+  <form method="post" class="mt-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="mb-3"><label class="form-label" for="email">Work email</label><input class="form-control" type="email" id="email" name="email" required autocomplete="username" autofocus></div>
+    <div class="mb-3"><label class="form-label" for="password">Password</label><input class="form-control" type="password" id="password" name="password" required autocomplete="current-password"></div>
+    <label class="remember-row"><input class="form-check-input" type="checkbox" name="remember"> Keep me signed in</label>
+    <button class="btn btn-primary w-100 mt-4" type="submit">Sign in <i class="bi bi-arrow-right ms-2"></i></button>
+  </form>
+  <p class="login-note">Accounts are provisioned by your administrator.</p>
+</section>
+<aside class="login-aside"><div class="aside-grid"></div><div class="aside-copy"><span class="eyebrow">CONTROL YOUR STOCK</span><h2>Every item.<br>Accounted for.</h2><p>One clear view of what is moving through your business.</p><div class="aside-stats"><span><i class="bi bi-shield-check"></i> Role-based access</span><span><i class="bi bi-arrow-left-right"></i> Auditable movements</span></div></div><span class="aside-index">IMS / 01</span></aside>
+{% endblock %}

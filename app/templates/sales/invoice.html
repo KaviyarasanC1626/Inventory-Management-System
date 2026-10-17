@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Invoice {{ order.invoice_number }}{% endblock %}
+{% block content %}
+<div class="invoice-toolbar">
+  <a class="btn btn-outline-secondary" href="{{ url_for('sales.index') }}"><i class="bi bi-arrow-left me-2"></i>Sales orders</a>
+  <button class="btn btn-primary" type="button" onclick="window.print()"><i class="bi bi-printer me-2"></i>Print invoice</button>
+</div>
+<article class="invoice-sheet">
+  <header class="invoice-header">
+    <div>
+      <a class="brand" href="{{ url_for('dashboard.index') }}"><span class="brand-mark"><i class="bi bi-box-seam"></i></span><span>Stockroom</span></a>
+      <p class="muted-copy mt-3">INVENTORY &amp; SALES</p>
+    </div>
+    <div class="invoice-id">
+      <span>INVOICE</span>
+      <strong>{{ order.invoice_number }}</strong>
+      <span class="status-badge status-{{ order.status }}">{{ order.status|title }}</span>
+    </div>
+  </header>
+  <div class="invoice-meta">
+    <div><small>Bill to</small><strong>{{ order.customer_name or 'Walk-in customer' }}</strong></div>
+    <div><small>Invoice date</small><strong>{{ order.created_at.strftime('%B %d, %Y') }}</strong></div>
+    <div><small>Warehouse</small><strong>{{ order.warehouse.name }}</strong></div>
+  </div>
+  <div class="table-responsive">
+    <table class="table invoice-table">
+      <thead><tr><th>Item</th><th>SKU</th><th class="text-end">Qty</th><th class="text-end">Unit price</th><th class="text-end">Line discount</th><th class="text-end">Amount</th></tr></thead>
+      <tbody>
+        {% for item in order.items %}
+        <tr>
+          <td>{{ item.product.name }}</td><td>{{ item.product.sku }}</td>
+          <td class="text-end">{{ item.quantity }}</td>
+          <td class="text-end">₹{{ '%.2f'|format(item.unit_price) }}</td>
+          <td class="text-end">₹{{ '%.2f'|format(item.discount_amount) }}</td>
+          <td class="text-end">₹{{ '%.2f'|format(item.unit_price * item.quantity - item.discount_amount) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="invoice-totals">
+    <div><span>Subtotal</span><strong>₹{{ '%.2f'|format(order.subtotal) }}</strong></div>
+    <div><span>Item discounts</span><strong>-₹{{ '%.2f'|format(order.line_discount_total) }}</strong></div>
+    <div><span>Order discount</span><strong>-₹{{ '%.2f'|format(order.discount_amount) }}</strong></div>
+    <div><span>Tax ({{ '%.2f'|format(order.tax_rate) }}%)</span><strong>₹{{ '%.2f'|format(order.tax_amount) }}</strong></div>
+    <div class="invoice-grand"><span>Total</span><strong>₹{{ '%.2f'|format(order.total_amount) }}</strong></div>
+  </div>
+  <footer class="invoice-footer">Thank you for your business.</footer>
+</article>
+{% endblock %}

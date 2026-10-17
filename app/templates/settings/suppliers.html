@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Suppliers{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">PROCUREMENT</p><h1>Suppliers</h1><p class="muted-copy">Keep supplier contacts available for purchasing. Deactivation preserves purchase history.</p></div></div>
+<div class="settings-grid">
+  <section class="panel operation-panel">
+    <h2>Add supplier</h2>
+    <form method="post" class="mt-3">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="mb-3"><label class="form-label" for="name">Supplier name</label><input class="form-control" name="name" id="name" maxlength="160" required></div>
+      <div class="mb-3"><label class="form-label" for="email">Email</label><input class="form-control" type="email" name="email" id="email" maxlength="255"></div>
+      <div class="mb-3"><label class="form-label" for="phone">Phone</label><input class="form-control" name="phone" id="phone" maxlength="40"></div>
+      <div class="mb-3"><label class="form-label" for="address">Address</label><textarea class="form-control" name="address" id="address" maxlength="500" rows="2"></textarea></div>
+      <button class="btn btn-primary">Add supplier</button>
+    </form>
+  </section>
+  <section class="panel table-panel">
+    <div class="panel-heading inside-table-heading"><h2>Supplier directory</h2><span class="table-count">{{ suppliers|length }}</span></div>
+    <div class="table-responsive"><table class="table align-middle data-table">
+      <thead><tr><th>Supplier</th><th>Email</th><th>Phone</th><th>Address</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+      {% for supplier in suppliers %}
+        <tr>
+          <td class="table-product">{{ supplier.name }}</td><td>{{ supplier.email or '—' }}</td><td>{{ supplier.phone or '—' }}</td><td>{{ supplier.address or '—' }}</td>
+          <td><span class="status-badge {{ 'status-good' if supplier.is_active else 'status-cancelled' }}">{{ 'Active' if supplier.is_active else 'Inactive' }}</span></td>
+          <td class="actions-cell">
+            <a class="icon-button" href="{{ url_for('settings.edit_supplier', supplier_id=supplier.id) }}" title="Edit supplier"><i class="bi bi-pencil"></i></a>
+            <form method="post" action="{{ url_for('settings.toggle_supplier', supplier_id=supplier.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-secondary">{{ 'Deactivate' if supplier.is_active else 'Activate' }}</button></form>
+            <form method="post" action="{{ url_for('settings.delete_supplier', supplier_id=supplier.id) }}" data-confirm="Delete {{ supplier.name }} only if it has no product or purchase history?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="icon-button danger-icon" title="Delete unused supplier"><i class="bi bi-trash3"></i></button></form>
+          </td>
+        </tr>
+      {% else %}<tr><td colspan="6" class="text-center text-muted py-4">No suppliers yet.</td></tr>{% endfor %}
+      </tbody>
+    </table></div>
+  </section>
+</div>
+{% endblock %}

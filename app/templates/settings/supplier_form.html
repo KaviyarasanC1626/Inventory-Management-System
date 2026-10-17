@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Edit supplier{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">PROCUREMENT / SUPPLIERS</p><h1>Edit supplier</h1><p class="muted-copy">Update contact details while keeping purchase history intact.</p></div><a class="btn btn-outline-secondary" href="{{ url_for('settings.suppliers') }}"><i class="bi bi-arrow-left me-2"></i>Back to suppliers</a></div>
+<section class="panel form-panel"><form method="post" class="row g-3"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="col-md-6"><label class="form-label" for="name">Supplier name</label><input class="form-control" id="name" name="name" maxlength="160" required value="{{ supplier.name }}"></div>
+  <div class="col-md-6"><label class="form-label" for="email">Email</label><input class="form-control" type="email" id="email" name="email" maxlength="255" value="{{ supplier.email or '' }}"></div>
+  <div class="col-md-6"><label class="form-label" for="phone">Phone</label><input class="form-control" id="phone" name="phone" maxlength="40" value="{{ supplier.phone or '' }}"></div>
+  <div class="col-12"><label class="form-label" for="address">Address</label><textarea class="form-control" id="address" name="address" maxlength="500" rows="3">{{ supplier.address or '' }}</textarea></div>
+  <div class="col-12 form-actions"><a class="btn btn-outline-secondary" href="{{ url_for('settings.suppliers') }}">Cancel</a><button class="btn btn-primary">Save supplier</button></div>
+</form></section>
+{% endblock %}

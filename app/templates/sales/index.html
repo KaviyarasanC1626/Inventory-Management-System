@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Sales{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><p class="eyebrow">CHECKOUT / INVOICES</p><h1>Sales orders</h1><p class="muted-copy">Stock is deducted once, when an order is completed.</p></div>
+  <a class="btn btn-primary" href="{{ url_for('sales.new') }}"><i class="bi bi-plus-lg me-2"></i>New sale</a>
+</div>
+<section class="panel table-panel">
+  <div class="table-responsive">
+    <table class="table align-middle data-table">
+      <thead><tr><th>Invoice</th><th>Customer</th><th>Created</th><th>Lines</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+      {% for order in orders %}
+        <tr>
+          <td><code>{{ order.invoice_number }}</code></td><td>{{ order.customer_name or 'Walk-in' }}</td>
+          <td>{{ order.created_at.strftime('%b %d, %Y') }}</td><td>{{ order.items|length }}</td>
+          <td class="price-cell">₹{{ '%.2f'|format(order.total_amount) }}</td>
+          <td><span class="status-badge status-{{ order.status }}">{{ order.status|title }}</span></td>
+          <td class="actions-cell">
+            {% if order.status == 'pending' %}
+            <form method="post" action="{{ url_for('sales.complete', order_id=order.id) }}" data-confirm="Complete this sale and deduct stock?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-primary">Complete</button></form>
+            <form method="post" action="{{ url_for('sales.cancel', order_id=order.id) }}" data-confirm="Cancel this pending sale?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="icon-button danger-icon" title="Cancel sale"><i class="bi bi-x-circle"></i></button></form>
+            {% endif %}
+            <a class="icon-button" href="{{ url_for('sales.invoice', order_id=order.id) }}" title="View printable invoice"><i class="bi bi-printer"></i></a>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7"><div class="empty-state table-empty"><i class="bi bi-receipt"></i><strong>No sales orders yet</strong><span>Create a sale to prepare an invoice.</span><a class="btn btn-sm btn-primary mt-2" href="{{ url_for('sales.new') }}">Create sale</a></div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

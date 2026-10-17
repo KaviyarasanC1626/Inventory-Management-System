@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Purchases{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div><p class="eyebrow">PROCUREMENT</p><h1>Purchase orders</h1><p class="muted-copy">Inventory changes only when an approved order is received.</p></div>
+  <a class="btn btn-primary" href="{{ url_for('purchases.new') }}"><i class="bi bi-plus-lg me-2"></i>New purchase</a>
+</div>
+<section class="panel table-panel">
+  <div class="table-responsive">
+    <table class="table align-middle data-table">
+      <thead><tr><th>Order</th><th>Supplier</th><th>Warehouse</th><th>Created</th><th>Items</th><th>Total</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+      {% for order in orders %}
+        <tr>
+          <td><code>{{ order.order_number }}</code></td><td>{{ order.supplier.name }}</td><td>{{ order.warehouse.code }}</td>
+          <td>{{ order.created_at.strftime('%b %d, %Y') }}</td><td>{{ order.items|length }}</td>
+          <td class="price-cell">₹{{ '%.2f'|format(order.total_amount) }}</td>
+          <td><span class="status-badge status-{{ order.status }}">{{ order.status|title }}</span></td>
+          <td class="actions-cell">
+            {% if order.status == 'pending' %}
+            <form method="post" action="{{ url_for('purchases.approve', order_id=order.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-outline-primary">Approve</button></form>
+            {% elif order.status == 'approved' %}
+            <form method="post" action="{{ url_for('purchases.receive', order_id=order.id) }}" data-confirm="Receive this order and add its quantities to inventory?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-sm btn-primary">Receive</button></form>
+            {% endif %}
+            {% if order.status in ['pending', 'approved'] %}
+            <form method="post" action="{{ url_for('purchases.cancel', order_id=order.id) }}" data-confirm="Cancel purchase order {{ order.order_number }}?"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="icon-button danger-icon" title="Cancel order"><i class="bi bi-x-circle"></i></button></form>
+            {% endif %}
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="8"><div class="empty-state table-empty"><i class="bi bi-truck"></i><strong>No purchase orders yet</strong><span>Create an order to plan a supplier receipt.</span><a class="btn btn-sm btn-primary mt-2" href="{{ url_for('purchases.new') }}">Create purchase</a></div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

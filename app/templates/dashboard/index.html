@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">OVERVIEW / {{ now().strftime('%A, %B %d') if now is defined else 'OPERATIONS' }}</p><h1>Dashboard</h1><p class="muted-copy">A live snapshot of your inventory operation.</p></div>{% if can_view_costs %}<a class="btn btn-outline-secondary" href="{{ url_for('reports.index') }}"><i class="bi bi-download me-2"></i>Export reports</a>{% endif %}</div>
+<section class="metric-grid {{ 'metric-grid-limited' if not can_view_costs }}">
+  <article class="metric-card"><span class="metric-label">Active products</span><div class="metric-value">{{ product_count }}</div><span class="metric-foot"><i class="bi bi-box"></i> Catalog items</span></article>
+  {% if can_view_costs %}<article class="metric-card metric-highlight"><span class="metric-label">Inventory value</span><div class="metric-value">₹{{ '%.2f'|format(inventory_value|float) }}</div><span class="metric-foot"><i class="bi bi-calculator"></i> At recorded cost</span></article>{% endif %}
+  <article class="metric-card"><span class="metric-label">Sales · 14 days</span><div class="metric-value">₹{{ '%.2f'|format(sales_total|float) }}</div><span class="metric-foot"><i class="bi bi-graph-up-arrow"></i> Completed invoices</span></article>
+  {% if can_view_costs %}<article class="metric-card"><span class="metric-label">Purchases · 14 days</span><div class="metric-value">₹{{ '%.2f'|format(purchases_total|float) }}</div><span class="metric-foot"><i class="bi bi-truck"></i> Received orders</span></article>{% endif %}
+</section>
+<section class="dashboard-grid {{ 'dashboard-grid-single' if not can_view_costs }} mt-4">
+  <article class="panel chart-panel">
+    <div class="panel-heading"><div><h2>Sales trend</h2><p class="muted-copy">Daily completed sales · last 14 days</p></div><span class="panel-icon coral"><i class="bi bi-activity"></i></span></div>
+    <div class="chart-wrap">
+      {% if has_sales %}<canvas id="salesChart" aria-label="Sales trend in rupees" role="img"></canvas>
+      {% else %}<div class="empty-state chart-empty-state"><i class="bi bi-graph-up"></i><strong>No completed sales</strong><span>Completed invoice amounts will appear here.</span></div>{% endif %}
+    </div>
+  </article>
+  {% if can_view_costs %}<article class="panel chart-panel">
+    <div class="panel-heading"><div><h2>Stock movement</h2><p class="muted-copy">Daily units received versus issued · last 14 days</p></div><span class="panel-icon blue"><i class="bi bi-arrow-left-right"></i></span></div>
+    <div class="chart-wrap">
+      {% if has_movements %}<canvas id="movementChart" aria-label="Stock movement in units" role="img"></canvas>
+      {% else %}<div class="empty-state chart-empty-state"><i class="bi bi-stack"></i><strong>No stock movements</strong><span>Received and issued unit counts will appear here.</span></div>{% endif %}
+    </div>
+  </article>{% endif %}
+</section>
+<section class="panel low-stock-panel mt-4"><div class="panel-heading"><div><h2>Reorder attention</h2><p class="muted-copy">At or below minimum stock</p></div><a class="text-link" href="{{ url_for('inventory.index') }}">View all</a></div>
+  {% if low_stock %}<div class="compact-list">{% for row in low_stock %}<div class="compact-row"><span class="product-avatar">{{ row.product.name[:1]|upper }}</span><span class="compact-product"><strong>{{ row.product.name }}</strong><small>{{ row.product.sku }} · {{ row.warehouse.code }}</small></span><span class="stock-pill {{ 'critical' if row.quantity == 0 else '' }}">{{ row.quantity }} left</span></div>{% endfor %}</div>{% else %}<div class="empty-state"><i class="bi bi-check2-circle"></i><strong>Stock levels look good</strong><span>No items are below reorder level.</span></div>{% endif %}
+</section>
+{% endblock %}
+{% block scripts %}<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script><script>
+const inr = new Intl.NumberFormat('en-IN', {style:'currency', currency:'INR', minimumFractionDigits:2, maximumFractionDigits:2});
+const actualValueLabels = {
+  id: 'actualValueLabels',
+  afterDatasetsDraw(chart) {
+    const {ctx} = chart;
+    ctx.save();
+    ctx.font = '600 10px DM Sans';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    chart.data.datasets.forEach((dataset, datasetIndex) => {
+      const meta = chart.getDatasetMeta(datasetIndex);
+      meta.data.forEach((element, index) => {
+        const value = Number(dataset.data[index]);
+        if (!value) return;
+        const {x, y} = element.getProps(['x', 'y'], true);
+        ctx.fillStyle = chart.canvas.id === 'salesChart' ? '#105c57' : dataset.backgroundColor;
+        ctx.fillText(chart.canvas.id === 'salesChart' ? inr.format(value) : value.toLocaleString('en-IN'), x, y - 7);
+      });
+    });
+    ctx.restore();
+  }
+};
+
+const salesCanvas = document.getElementById('salesChart');
+if (salesCanvas) new Chart(salesCanvas, {
+  type: 'line',
+  data: {labels: {{ chart_labels|tojson }}, datasets: [{label:'Sales', data: {{ chart_values|tojson }}, borderColor:'#167b73', backgroundColor:'rgba(22,123,115,.12)', fill:true, tension:.35, pointRadius:3, pointBackgroundColor:'#167b73'}]},
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}, tooltip:{callbacks:{label:context => `Sales: ${inr.format(context.parsed.y)}`}}},
+    scales:{y:{beginAtZero:true, grid:{color:'#edf0ed'}, ticks:{callback:value => inr.format(Number(value))}}, x:{grid:{display:false}}}
+  },
+  plugins:[actualValueLabels]
+});
+
+const movementCanvas = document.getElementById('movementChart');
+if (movementCanvas) new Chart(movementCanvas, {
+  type: 'bar',
+  data: {labels: {{ chart_labels|tojson }}, datasets: [
+    {label:'Received', data: {{ movement_in_values|tojson }}, backgroundColor:'#167b73', borderRadius:3},
+    {label:'Issued', data: {{ movement_out_values|tojson }}, backgroundColor:'#d66d54', borderRadius:3}
+  ]},
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom', labels:{boxWidth:9, boxHeight:9, usePointStyle:true}}, tooltip:{callbacks:{label:context => `${context.dataset.label}: ${Number(context.parsed.y).toLocaleString('en-IN')} units`}}},
+    scales:{y:{beginAtZero:true, ticks:{precision:0, stepSize:1, callback:value => `${Number(value).toLocaleString('en-IN')} units`}, grid:{color:'#edf0ed'}}, x:{grid:{display:false}}}
+  },
+  plugins:[actualValueLabels]
+});
+</script>{% endblock %}
